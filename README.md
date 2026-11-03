@@ -1,42 +1,44 @@
 # template-mcu-minimal-STM32G474VET6-XPulse
 
-Minimal STM32G474VET6 starter template for CubeMX + PlatformIO + VS Code.
+面向 STM32CubeMX + PlatformIO + VS Code 的最小 STM32G474VET6 起步模板。
 
-## Target
+## 目标平台
 
-- MCU: STM32G474VET6 (LQFP100, 512 KB Flash, 128 KB RAM)
-- Board: XPulse / Penguins-G474
-- Debug/flash: ST-Link over SWD
+- 芯片：STM32G474VET6（LQFP100 封装，512 KB Flash，128 KB RAM）
+- 开发板：XPulse / Penguins-G474
+- 调试与烧录：ST-Link（SWD 接口）
 
-## Required tools
+## 需要的工具
 
 - STM32CubeMX
-- PlatformIO Core (`pio`)
-- VS Code + PlatformIO + Cortex-Debug
+- PlatformIO Core（`pio`）
+- VS Code + PlatformIO + Cortex-Debug 扩展
 
-## Build
+## 编译
 
 ```bash
 pio run
 ```
 
-## Upload
+## 烧录
 
 ```bash
 pio run -t upload
 ```
 
-## Modify peripherals
+## 修改外设
 
-Open `template-mcu-minimal-STM32G474VET6-XPulse.ioc` in STM32CubeMX → change clocks/pins/peripherals → Generate Code → run `pio run`.
+在 STM32CubeMX 中打开 `template-mcu-minimal-STM32G474VET6-XPulse.ioc` → 调整时钟、引脚或外设 → 点 `Generate Code` 生成代码 → 执行 `pio run` 重新编译。
 
-## Default pins and clock
+> CubeMX 生成代码时会顺带产出 `Drivers/` 和 `.mxproject`，这两个已在 `.gitignore` 中忽略，不会污染版本库；HAL 头文件实际取自 PlatformIO 的 `framework-stm32cubeg4` 包。
 
-- PC13: red LED (active low)
-- PA13: SWDIO
-- PA14: SWCLK
-- Default clock: HSI 16 MHz (no PLL)
-- Board also provides 24 MHz HSE, which you can enable later in CubeMX
+## 默认引脚与时钟
+
+- PC13：红色 LED（低电平点亮）
+- PA13：SWDIO
+- PA14：SWCLK
+- 默认时钟：HSI 16 MHz（未启用 PLL）
+- 板上另有 24 MHz HSE，后续可在 CubeMX 中启用
 
 ## clangd 初始化
 
