@@ -3,13 +3,10 @@
     "core": "stm32",
     "cpu": "cortex-m4",
     "extra_flags": "-DSTM32G4 -DSTM32G4xx -DSTM32G474xx",
-    "f_cpu": "170000000L",
+    "f_cpu": "16000000L",
     "mcu": "stm32g474vet6",
     "product_line": "STM32G474xx"
   },
-  "connectivity": [
-    "can"
-  ],
   "debug": {
     "default_tools": [
       "stlink"
