@@ -1,12 +1,30 @@
+# ---- PlatformIO 构建产物 ----
 .pio/
 .vscode/c_cpp_properties.json
 
-Makefile
-STM32G474xx_FLASH.ld
-startup_stm32g474xx.s
+# ---- STM32CubeMX 生成物 ----
+# HAL/CMSIS 由 PlatformIO 的 framework-stm32cubeg4 包提供，
+# CubeMX 生成的本地 Drivers/ 副本（1100+ 文件）不纳入版本控制。
+Drivers/
+.mxproject
+
+# CubeMX 的 Makefile 工具链产物（本模板用 PlatformIO 构建）
+/Makefile
+/STM32G474xx_FLASH.ld
+/startup_stm32g474xx.s
+
 *.ioc.bak
 *.ioc.bak.*
 
+# ---- clangd / 编辑器索引产物（scripts/init-clangd.* 生成）----
+/compile_commands.json
+/.clangd
+/.cache/
+
+# ---- 本地产物 ----
+/.workbuddy/
+
+# ---- 通用 ----
 *.bak
 *.orig
 *.rej

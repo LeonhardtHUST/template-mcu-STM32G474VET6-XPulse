@@ -7,5 +7,13 @@
   },
   "files.associations": {
     "*.ioc": "ini"
-  }
+  },
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}",
+    "--query-driver=**/arm-none-eabi-gcc,**/arm-none-eabi-g++,**/arm-none-eabi-gcc.exe,**/arm-none-eabi-g++.exe",
+    "--background-index",
+    "--clang-tidy"
+  ],
+  "clangd.restartAfterCrash": true
 }
