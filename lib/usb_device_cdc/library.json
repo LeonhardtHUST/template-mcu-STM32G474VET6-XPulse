@@ -1,0 +1,24 @@
+{
+    "name": "usb_device_cdc",
+    "version": "1.0.0",
+    "description": "ST USB Device CDC stack (CubeMX generated App/Target + Middlewares), HSI48 clocked",
+    "license": "ST BSD-3-Clause",
+    "build": {
+        "srcDir": ".",
+        "includeDir": ".",
+        "srcFilter": [
+            "+<usb_device.c>",
+            "+<usbd_cdc_if.c>",
+            "+<usbd_desc.c>",
+            "+<usbd_conf.c>",
+            "+<middlewares/usbd_core.c>",
+            "+<middlewares/usbd_ctlreq.c>",
+            "+<middlewares/usbd_ioreq.c>",
+            "+<middlewares/usbd_cdc.c>"
+        ],
+        "includeDirs": [
+            ".",
+            "middlewares"
+        ]
+    }
+}
