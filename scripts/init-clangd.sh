@@ -47,6 +47,9 @@ if [ ! -f "$SETTINGS" ]; then
     '    "*.ioc": "ini"' \
     '  },' \
     '  "C_Cpp.intelliSenseEngine": "disabled",' \
+    '  "C_Cpp.intelliSenseEngineFallback": "disabled",' \
+    '  "C_Cpp.autocomplete": "disabled",' \
+    '  "C_Cpp.errorSquiggles": "disabled",' \
     '  "clangd.arguments": [' \
     '    "--compile-commands-dir=${workspaceFolder}",' \
     '    "--query-driver=**/arm-none-eabi-gcc,**/arm-none-eabi-g++,**/arm-none-eabi-gcc.exe,**/arm-none-eabi-g++.exe",' \

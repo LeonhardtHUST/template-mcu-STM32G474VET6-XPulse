@@ -1,6 +1,11 @@
 # ---- PlatformIO 构建产物 ----
 .pio/
+
+# ---- VS Code 里由 PlatformIO IDE 自动生成/覆盖的文件 ----
+# 这些文件会写入本机绝对路径（如 C:/Users/<name>/.platformio/...），
+# 每次装扩展或启动调试都会被重写，不应纳入版本控制。
 .vscode/c_cpp_properties.json
+.vscode/launch.json
 
 # ---- STM32CubeMX 生成物 ----
 # HAL/CMSIS 由 PlatformIO 的 framework-stm32cubeg4 包提供，
@@ -23,6 +28,14 @@ Drivers/
 
 # ---- 本地产物 ----
 /.workbuddy/
+
+# ---- Node 工具链（仅用于 commitlint 提交校验，不参与固件编译）----
+node_modules/
+pnpm-debug.log*
+
+# Vite+ 钩子转发器是生成物（`vp hooks enable` 重建）；
+# .vite-hooks/commit-msg 是手写源文件，需要入库。
+/.vite-hooks/_/
 
 # ---- 通用 ----
 *.bak

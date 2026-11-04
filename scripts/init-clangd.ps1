@@ -54,7 +54,10 @@ if (-not (Test-Path $settingsPath)) {
         'files.exclude'            = [ordered]@{ '**/.pio' = $true }
         'search.exclude'           = [ordered]@{ '**/.pio' = $true }
         'files.associations'       = [ordered]@{ '*.ioc' = 'ini' }
-        'C_Cpp.intelliSenseEngine' = 'disabled'
+        'C_Cpp.intelliSenseEngine'         = 'disabled'
+        'C_Cpp.intelliSenseEngineFallback' = 'disabled'
+        'C_Cpp.autocomplete'               = 'disabled'
+        'C_Cpp.errorSquiggles'             = 'disabled'
         'clangd.arguments'         = @(
             '--compile-commands-dir=${workspaceFolder}'
             '--query-driver=**/arm-none-eabi-gcc.exe,**/arm-none-eabi-g++.exe'
