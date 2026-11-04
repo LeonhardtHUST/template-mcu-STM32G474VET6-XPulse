@@ -1,43 +1,55 @@
 # ---- PlatformIO 构建产物 ----
+# 忽略 + 理由：`.pio/` 是 `pio run` 的本地构建目录，机器相关且可随时重建，入库只会制造噪音。
 .pio/
 
 # ---- VS Code 里由 PlatformIO IDE 自动生成/覆盖的文件 ----
-# 这些文件会写入本机绝对路径（如 C:/Users/<name>/.platformio/...），
-# 每次装扩展或启动调试都会被重写，不应纳入版本控制。
+# 忽略 + 理由：以下两份会写入本机绝对路径（如 C:/Users/<name>/.platformio/...），
+# 每次装扩展或启动调试都被重写，不应纳入版本控制。
 .vscode/c_cpp_properties.json
+# 忽略 + 理由：`launch.json` 由 PlatformIO / STM32 扩展生成，CubeMX 生成也会覆盖它；
+# 模板刻意不提供入库的调试配置，避免把本机路径和生成物带进仓库。
 .vscode/launch.json
 
 # ---- STM32CubeMX 生成物 ----
-# HAL/CMSIS 由 PlatformIO 的 framework-stm32cubeg4 包提供，
-# CubeMX 生成的本地 Drivers/ 副本（1100+ 文件）不纳入版本控制。
+# 忽略 + 理由：HAL/CMSIS 由 PlatformIO 的 `framework-stm32cubeg4` 包提供，
+# CubeMX 生成的本地 `Drivers/` 副本（1100+ 文件）不参与编译，也不入库。
 Drivers/
+# 忽略 + 理由：`.mxproject` 记录 CubeMX 上次生成的路径与文件清单，含本机路径、
+# 每次生成都变化；它是生成物的元数据，不是事实源（事实源是 `.ioc`）。
 .mxproject
 
-# CubeMX 的 Makefile 工具链产物（本模板用 PlatformIO 构建）
+# 忽略 + 理由：CubeMX 的 Makefile 工具链产物（Makefile / 链接脚本 / 启动文件）
+# 本模板改用 PlatformIO 构建，三者均由 framework 与板级定义自动提供。
 /Makefile
 /STM32G474xx_FLASH.ld
 /startup_stm32g474xx.s
 
+# 忽略 + 理由：CubeMX 或手工备份 `.ioc` 留下的副本，避免与唯一事实源混淆。
 *.ioc.bak
 *.ioc.bak.*
 
 # ---- clangd / 编辑器索引产物（scripts/init-clangd.* 生成）----
+# 忽略 + 理由：编译数据库、clangd 配置与缓存均为本机生成物，换机器必须重跑 `vpr clangd`。
 /compile_commands.json
 /.clangd
 /.cache/
 
 # ---- 本地产物 ----
+# 忽略 + 理由：工具链/编辑器在本仓库写下的会话级临时目录，不属于模板内容。
 /.workbuddy/
 
 # ---- Node 工具链（仅用于 commitlint 提交校验，不参与固件编译）----
+# 忽略 + 理由：依赖目录可由 lockfile 重建，体积大且含平台相关二进制。
 node_modules/
+# 忽略 + 理由：pnpm 失败时的调试日志，可能含本机路径。
 pnpm-debug.log*
 
-# Vite+ 钩子转发器是生成物（`vp hooks enable` 重建）；
-# .vite-hooks/commit-msg 是手写源文件，需要入库。
+# 忽略 + 理由：Vite+ 钩子转发器是 `vp hooks enable` 的生成物，可随时重建；
+# `.vite-hooks/commit-msg` 是手写源文件，需要入库，故只忽略下划线目录。
 /.vite-hooks/_/
 
 # ---- 通用 ----
+# 忽略 + 理由：编辑器/系统留下的备份、补丁拒绝文件、临时文件与缩略图缓存。
 *.bak
 *.orig
 *.rej
