@@ -3,6 +3,7 @@
   ******************************************************************************
   * @file           : main.h
   * @brief          : Header for main.c file.
+  *                   This file contains the common defines of the application.
   ******************************************************************************
   * @attention
   *
@@ -17,6 +18,7 @@
   */
 /* USER CODE END Header */
 
+/* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __MAIN_H
 #define __MAIN_H
 
@@ -24,12 +26,46 @@
 extern "C" {
 #endif
 
+/* Includes ------------------------------------------------------------------*/
 #include "stm32g4xx_hal.h"
 
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+/* 板级引脚映射（XPulse 专用）。本文件不会被 CubeMX 生成/覆盖，
+ * 放在 USER CODE 块里引入，重新生成代码后这行依然保留。 */
+#include "xpulse.h"
+/* USER CODE END Includes */
+
+/* Exported types ------------------------------------------------------------*/
+/* USER CODE BEGIN ET */
+
+/* USER CODE END ET */
+
+/* Exported constants --------------------------------------------------------*/
+/* USER CODE BEGIN EC */
+
+/* USER CODE END EC */
+
+/* Exported macro ------------------------------------------------------------*/
+/* USER CODE BEGIN EM */
+
+/* USER CODE END EM */
+
+/* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
+/* USER CODE BEGIN EFP */
+
+/* USER CODE END EFP */
+
+/* Private defines -----------------------------------------------------------*/
 #define LED_RED_Pin GPIO_PIN_13
 #define LED_RED_GPIO_Port GPIOC
+/* USER CODE BEGIN Private defines */
+/* 上面两条是 CubeMX 按 .ioc 生成的占位定义（PC13）。
+ * XPulse 板上 PC13 只引到扩展排针，没有 LED；板载三色灯见 xpulse.h 的
+ * XP_LED_R/LED_G/LED_B（PC2/PC1/PC0，低电平点亮）。 */
+/* USER CODE END Private defines */
 
 #ifdef __cplusplus
 }
