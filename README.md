@@ -50,9 +50,63 @@ vpr init my-board --dry-run   # 只打印计划，不写文件
 ```
 
 脚本会重命名根目录的 `.ioc`、改掉 `.ioc` 里的 `ProjectManager.ProjectFileName` 与
-`ProjectManager.ProjectName`，并把 `README.md`、`.vscode/tasks.json`、`package.json`
-里的旧名一并替换。目录名脚本不管，需要时自己改。npm 传参要加 `--`：
+`ProjectManager.ProjectName`，并把 `README.md`、`.vscode/tasks.json`、`package.json`、
+`scripts/cubemx-generate.mx` 里的旧名一并替换（后者硬编码了 `.ioc` 名，改名后
+必须同步）。目录名脚本不管，需要时自己改。npm 传参要加 `--`：
 `npm run init -- my-board --yes`。
+
+项目名与当前 `.ioc` 一致时脚本不再早退，仍会继续执行后续操作。
+
+<!-- BEGIN EXAMPLES -->
+### 示例目录与一键删除
+
+模板自带 `examples/`：14 个板载例程的总索引、3 篇高频接入配方，以及一份可在主机
+GCC 上跑的 L2 回归样例。它只是**可选参考资料**，不参与固件构建，可以整目录删除。
+初始化脚本的改名目标里也包含 `examples/INDEX.md`（该索引刻意不硬编码模板名，
+通常是空操作），保留示例时改名不会让索引失效。
+
+初始化时脚本会在打印计划之后、总确认之前**单独询问**：
+
+```text
+是否删除 examples/ 目录？[y/N]
+```
+
+默认 **N = 保留**；只有回答 `y` / `yes` 才删除。也可以直接用 CLI 参数决定，
+此时不再询问：
+
+```bash
+vpr init --no-examples      # 直接删除 examples/，不改项目名
+vpr init --keep-examples    # 明确保留，不询问
+vpr init my-board --no-examples --yes
+node scripts/init-project.mjs --no-examples --dry-run   # 只打印「将删除 examples/」
+```
+
+`--no-examples` 与 `--keep-examples` 互斥，同时传入会报错。`--yes` 只跳过确认，
+**不会**顺带删除示例：未指定 examples 参数时一律按默认保留，非交互环境也不会等待输入。
+`--dry-run` 只显示计划（含「将删除 `examples/`」），不写文件、不删目录。
+
+不想改名、只想删示例，用独立命令（无需项目名，命令本身即显式删除意图）：
+
+```bash
+vpr examples:remove
+pnpm run examples:remove
+npm run examples:remove
+node scripts/remove-examples.mjs --dry-run   # 只预览，不删
+```
+
+删除只针对仓库根目录下的 `examples/`，会同步移除本 README 中带
+`BEGIN/END EXAMPLES` HTML 标记的整个区块，避免留下死链；
+`docs/XPulse/例程/` 下的 14 个原始 Keil 工程**不会**被触碰。
+
+示例资料：
+
+- [示例总索引（14 个例程）](examples/INDEX.md)
+- [示例目录说明与统一接入流程](examples/README.md)
+- 配方：[GPIO 三色灯与按键](examples/recipes/GPIO.md)、
+  [Timer_PWM 呼吸灯](examples/recipes/Timer_PWM.md)、
+  [USART1 中断回显](examples/recipes/USART.md)
+- [L2 主机回归样例](examples/stdio_port/README.md)
+<!-- END EXAMPLES -->
 
 ## 编译
 
@@ -82,10 +136,46 @@ pio run -t upload
 - 默认时钟：HSI 16 MHz（未启用 PLL）；板上还有 8 MHz HSE（PF0/PF1）与
   32.768 kHz LSE（PC14/PC15），需要时在 CubeMX 的 RCC 里启用
 
-> 仓库自带的 `.ioc` 目前只把 PC13 配成了 `GPIO_Output`（`LED_RED`），这是 CubeMX
-> 默认模板留下的占位配置——XPulse 板的 PC13 只引到 P2/P3 扩展排针，并没有 LED。
-> 想让示例真正闪板载灯，请在该 `.ioc` 里把 PC2 设为 `GPIO_Output`（可选 label
-> `LED_R`），生成代码后把 `main()` 里的 `LED_RED_*` 换成 `XP_LED_R_*` 即可。
+> 仓库自带的 `.ioc` 已默认把 **PC2** 配成 `GPIO_Output`（`GPIO_Label=LED_R`），
+> 对应板载三色灯的红色通道，**开箱即可闪板载红灯**：`Core/Src/main.c` 在
+> `USER CODE BEGIN WHILE` 块里用 `xpulse.h` 的 `XPULSE_LED_R_ON()` / `XPULSE_LED_R_OFF()`
+> 交替点灯，上电先置 `XPULSE_LED_OFF`（灭）。板载三色灯仍是 PC0 / PC1 / PC2 =
+> 蓝 / 绿 / 红、共阳**低电平点亮**，引脚与电平宏（`XPULSE_LED_ON` = `GPIO_PIN_RESET`
+> 亮、`XPULSE_LED_OFF` = `GPIO_PIN_SET` 灭）统一来自 `Core/Inc/xpulse.h`；PC13 只引到
+> P2/P3 扩展排针，并没有 LED。
+
+### 可选：170 MHz 进阶配方（默认不启用）
+
+默认 `.ioc` 是 **HSI 16 MHz 最小骨架**（3 IP / 4 引脚，`FLASH_LATENCY_0`），
+下面是**按需进阶**的时钟配方，不会自动生效。要跑到 170 MHz，在 CubeMX 的 RCC 里
+按下面顺序改并重新生成：
+
+```ini
+RCC.HSE_VALUE=8000000
+RCC.PLLSourceVirtual=RCC_PLLSOURCE_HSE
+RCC.PLLM=RCC_PLLM_DIV2      ; 8 MHz / 2 = 4 MHz（VCO 输入）
+RCC.PLLN=85                 ; 4 MHz x 85 = 340 MHz（VCO）
+RCC.SYSCLKSource=RCC_SYSCLKSOURCE_PLLCLK
+                            ; PLLR = /2 -> 170 MHz
+```
+
+同时由 CubeMX 自动决定、**不要手写更小的值**：
+
+- 电压档 `PWR_REGULATOR_VOLTAGE_SCALE1_BOOST`；
+- Flash 等待周期 `FLASH_LATENCY_4`（HSI 16 MHz 默认是 `FLASH_LATENCY_0`）；
+- APB1 / APB2 均为 170 MHz，定时器时钟按 `RCC.APBxTimFreq_Value` 计算；
+- `boards/genericSTM32G474VE.json` 的 `f_cpu` 从 `16000000L` 改成 `170000000L`
+  （只影响 `F_CPU` 宏，不改变 `.ioc` 里的真实时钟）。
+
+USB 从机需要 48 MHz 内核时钟时用 **HSI48**
+（`RCC.CK48CLockSelection=RCC_USBCLKSOURCE_HSI48`），不要照抄厂商例程的
+PLLQ=DIV6 方案——那会把主频压到 144 MHz。板上 HSE 是 PF0/PF1 的 8 MHz 晶振，
+LSE 是 PC14/PC15 的 32.768 kHz 晶振。
+
+> 改 `.ioc` 属于 **L4 生成核验**：生成后必须核对日志无 `Cannot map`、且 `main.c` 里
+> 出现对应的 `MX_xxx_Init()`；改完再 `pio run`（L3），影响运行时的部分最终要 L5 实板。
+> 详见 [工程规约](AGENTS.md)、[占位符清单](docs/PLACEHOLDERS.md) 与
+> [CubeMX 工具实测](docs/TOOLING-cubemx.md)。
 
 ## 板级引脚映射（`Core/Inc/xpulse.h`）
 
@@ -93,7 +183,7 @@ pio run -t upload
 `GPIO_PIN_x` / `GPIOx` 魔法数字。它是普通头文件，CubeMX **既不生成也不覆盖**；而对它的
 `#include` 放在 `main.h` 的 `/* USER CODE BEGIN Includes */` 里，重新生成后依然保留。
 
-命名沿用 CubeMX 的 `<NAME>_Pin` / `<NAME>_GPIO_Port` 形式，但加 `XP_` 前缀，避免以后在
+命名沿用 CubeMX 的 `<NAME>_Pin` / `<NAME>_GPIO_Port` 形式，但加 `XPULSE_` 前缀，避免以后在
 CubeMX 里给同一引脚另起 `GPIO_Label` 时撞名。常用外设：
 
 | 功能 | 网络名 | 引脚 | 说明 |
@@ -117,19 +207,22 @@ CubeMX 里给同一引脚另起 `GPIO_Label` 时撞名。常用外设：
 ```c
 #include "main.h"   /* 已经间接包含 xpulse.h */
 
-XP_LED_ALL_OFF();          /* 先把三色灯全灭 */
-XP_LED_R_ON();             /* 点亮红灯（PC2） */
-HAL_GPIO_TogglePin(XP_LED_G_GPIO_Port, XP_LED_G_Pin);
+XPULSE_LED_ALL_OFF();          /* 先把三色灯全灭 */
+XPULSE_LED_R_ON();             /* 点亮红灯（PC2） */
+HAL_GPIO_TogglePin(XPULSE_LED_G_GPIO_Port, XPULSE_LED_G_Pin);
 ```
 
 > `xpulse.h` 只负责"引脚在哪"，引脚模式/AF/上下拉仍由 `.ioc` 决定：例如要用 SPI2，
-> 先在 CubeMX 里把 PB13/PB14/PB15 配成 SPI2，再到代码里引用 `XP_EXT_SPI2_*`。
+> 先在 CubeMX 里把 PB13/PB14/PB15 配成 SPI2，再到代码里引用 `XPULSE_EXT_SPI2_*`。
 
 ## 提交规范（commitlint）
 
 仓库用 [commitlint](https://commitlint.js.org/) 约束提交信息，规范为 **Angular / Conventional
 Commits**（规则集 `@commitlint/config-conventional`）。校验点在 Git 的 `commit-msg` 阶段，
 由 Vite+ 的 Hook 转发器调用仓库内的 `.vite-hooks/commit-msg`，不合规的提交会被直接拒绝。
+
+> 分工：commitlint 钩子只管**提交信息格式**；[AGENTS.md](AGENTS.md) 管**代码与 CubeMX
+> 生成边界**、中文 Conventional Commits 约定和 L0–L5 验证关卡，两者互补。
 
 ### 提交信息格式
 
@@ -353,5 +446,65 @@ powershell -ExecutionPolicy Bypass -File .\scripts\disable-clangd.ps1
 
 > 从别处拷来的脚本可能带 `Zone.Identifier` 标记，先 `Unblock-File .\scripts\init-clangd.ps1`。
 > `scripts/*.sh` 需要真正的 bash（Git Bash / WSL）；PATH 上的 `bash` 若是 STM32CubeCLT 自带的精简 sh，会报 `bad substitution`。
+
+## 故障排查
+
+- **`pio` 命令不存在**：安装 PlatformIO IDE 扩展后重启 VS Code，或 `pip install platformio`。
+  用 `pio --version` 核对；Windows 集成终端的 PATH 可能先匹配到旧的 pio shim。
+- **找不到下载器 / 探针连不上**：默认走 ST-Link（`upload_protocol = stlink`、
+  `debug_tool = stlink`），底层是 PlatformIO 自带的 OpenOCD + `interface/stlink.cfg`。
+  换 CMSIS-DAP 时两项一起改成 `cmsis-dap`；本模板刻意不入库 `launch.json`
+  （已在 `.gitignore` 忽略），需要 Cortex-Debug 的 launch / attach 配置时按
+  [Cortex-Debug 调试示例](docs/DEBUG-CORTEX.md) 自建，并复用
+  `scripts/openocd-stlink.cfg` / `scripts/openocd-cmsis-dap.cfg` 两份探针配置。
+- **SWD 连接失败（`cannot read IDR` / `No ACK`）**：先查 SWDIO(PA13) / SWCLK(PA14)
+  是否接反、GND 是否共地、目标板是否独立供电；必要时降低 `debug_speed`
+  或改用「连接时复位」（`connect_assert_srst`）。
+- **重复定义符号**：检查是否把 `Drivers/` 加进编译，或删掉了 `platformio.ini` 里
+  `build_src_filter = +<*> -<system_stm32g4xx.c>` 的排除规则。
+- **链接脚本不对 / Flash 溢出**：确认 `boards/genericSTM32G474VE.json` 的 `mcu`
+  是 `stm32g474vet6`，`maximum_size` / `maximum_ram_size` 为 524288 / 131072。
+- **生成后外设没生效**：CubeMX 对 `.ioc` 的错误是**非致命**的，信号名写错只会留一行
+  `Cannot map signal` 然后静默丢弃外设。核验生成日志无 `Cannot map`、
+  `main.c` 有对应 `MX_xxx_Init()`，且手写参数已进 `IPParameters` / `GPIOParameters`
+  白名单。见 [CubeMX 工具实测](docs/TOOLING-cubemx.md)。
+- **CubeMX 无头生成卡住**：多半是 `.ioc` 的 `ProjectManager.AskForMigrate=true`
+  弹了模态迁移框；本仓 `.ioc` 已设为 `false`（无头生成前必须），若被 CubeMX
+  生成 / 保存写回 `true`，再改回 `false` 即可。见 [占位符清单](docs/PLACEHOLDERS.md) D7。
+- **clangd 大面积报红**：`compile_commands.json` 过期或缺失，执行 `vpr clangd`
+  重新生成；改过 `platformio.ini`、`build_flags`、board 或源文件集合后都要重跑。
+- **提交被拒绝**：提交信息不符合 Angular / Conventional Commits 格式，
+  按上面的「提交规范」改写；也可用 `pnpm exec commitlint --edit .git/COMMIT_EDITMSG` 复查。
+- **`vpr` 打印 "This project does not use vite-plus"**：可忽略，仓库只用到它的
+  任务运行器与 Hook 转发器。
+
+## 模板维护与验证
+
+规约地基见 [工程规约](AGENTS.md)（12 条硬约束、L0–L5 验证关卡、与 commitlint 的分工），
+复制模板后必查项见 [占位符清单](docs/PLACEHOLDERS.md)，工具实测结论见
+[CubeMX 工具实测](docs/TOOLING-cubemx.md)，自维护库的封装形式见
+[库封装范式](docs/LIB-PATTERN.md)。
+
+- **版本锁定**：`ststm32@20.0.0`、`framework-stm32cubeg4@1.6.3`、
+  `toolchain-gccarmnoneeabi@1.70201.0`、`tool-ldscripts-ststm32@0.3.0`、
+  `tool-openocd@3.1200.7`。CubeG4 1.6.3 与本机 CubeMX 的 FW_G4 V1.6.3 同版本；
+  升级须同步验证「生成代码 + 构建」，不要单独升 HAL。
+- **编译选项**：工程源码用 C11 + `-Wall -Wextra -Werror`（`build_src_flags`），
+  严格选项不施加于 HAL/CMSIS。**已开启 `-Werror`**：存量告警已清零并经 L3 复核
+  （2026-11-04，/tmp 等价副本跑 `pio run` 零告警通过后落地，详见 `platformio.ini` 注释）。
+- **链接期可见性**（`build_flags`）：`-fdata-sections` / `-ffunction-sections`
+  配合 `-Wl,--gc-sections` 去掉未用段；`-Wl,--print-memory-usage` 让每次链接
+  直接打印 Flash / RAM 占用；`-Wl,-Map=${BUILD_DIR}/firmware.map` 产出
+  `.pio/build/genericSTM32G474VE/firmware.map`，便于查段与符号布局。
+- **`board_build.stm32cube.custom_config_header = yes`** 保证使用
+  `Core/Inc/stm32g4xx_hal_conf.h`；缺 `HAL_XXX_MODULE_ENABLED` 时在 `.ioc`
+  加外设再生成，不要手改这个头文件。
+- **浮点 printf**：newlib-nano 默认不含 `%f`，需要时在 `platformio.ini` 加
+  `-Wl,-u,_printf_float` 并重新构建（会增加 Flash/RAM 占用）。
+- **验证关卡**：L0 未验证 / L1 静态 / L2 主机回归（主机 GCC 编译不依赖 HAL 的纯 C，
+  不需要开发板）/ L3 `pio run` / L4 CubeMX 生成核验（任何 `.ioc` 改动必做）/
+  L5 实板。提交信息里如实写明做到的等级，纯文档改动明确写「未运行构建」。
+- **构建通过不等于能用**：影响运行时行为的改动必须实板确认，结论里区分
+  「编译通过」与「实板验证过」，不要复用旧构建数字充当本次证据。
 
 
