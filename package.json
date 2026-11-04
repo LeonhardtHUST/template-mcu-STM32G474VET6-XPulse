@@ -1,0 +1,14 @@
+{
+  "name": "template-mcu-minimal-stm32g474vet6-xpulse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "面向 STM32CubeMX + PlatformIO + VS Code 的最小 STM32G474VET6 起步模板",
+  "scripts": {
+    "hooks:install": "vp hooks enable",
+    "hooks:uninstall": "vp hooks disable"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4"
+  }
+}

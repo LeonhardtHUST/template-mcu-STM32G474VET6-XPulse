@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+# 提交信息校验（Angular / Conventional Commits）。
+#
+# 由 Vite+ 的 Git 钩子转发器调用：git 触发 .vite-hooks/_/commit-msg →
+# 转发到本文件，$1 是本次提交信息所在的临时文件路径。
+#
+# 触发方式：首次克隆后执行 `vp hooks enable`（或 `npm run hooks:install` / `pnpm run hooks:install`）。
+# 临时跳过：`VP_GIT_HOOKS=0 git commit -m "..."`。
+
+if ! command -v commitlint >/dev/null 2>&1; then
+  echo "[commitlint] 未找到 commitlint，请先在仓库根目录执行：vp install" >&2
+  exit 1
+fi
+
+commitlint --edit "$1"
