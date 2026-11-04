@@ -4,6 +4,9 @@
   "private": true,
   "description": "面向 STM32CubeMX + PlatformIO + VS Code 的最小 STM32G474VET6 起步模板",
   "scripts": {
+    "init": "node scripts/init-project.mjs",
+    "clangd": "node scripts/clangd.mjs",
+    "clangd:disable": "node scripts/clangd.mjs disable",
     "hooks:install": "vp hooks enable",
     "hooks:uninstall": "vp hooks disable"
   },

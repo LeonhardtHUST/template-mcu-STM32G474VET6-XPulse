@@ -8,12 +8,51 @@
 - 开发板：XPulse / Penguins-G474
 - 调试与烧录：ST-Link（SWD 接口）
 
-## 需要的工具
+## 依赖
 
-- STM32CubeMX
-- PlatformIO Core（`pio`）
-- VS Code + PlatformIO + Cortex-Debug 扩展
-- Node.js + 包管理器（[Vite+](https://viteplus.dev/) 的 `vp`、`npm`、`pnpm` 任一）—— 仅用于提交信息校验，不参与固件编译
+必需：
+
+- STM32CubeMX（改外设、生成代码）
+- PlatformIO Core（`pio`，编译 / 烧录 / 调试）
+- VS Code + 扩展：PlatformIO IDE、Cortex-Debug、clangd
+
+可选，缺了照样能编译烧录，只影响辅助功能：
+
+- Git —— 提交信息校验（commitlint、`vpr hooks:*`）
+- Node.js ≥ 20 + 下列包管理器之一 —— 跑 `scripts/` 里的快捷命令
+  - [Vite+](https://viteplus.dev/) 的 `vp` / `vpr`（推荐，需在 PATH 上）
+  - pnpm
+  - npm
+
+> `vpr` 每次会打印一行「This project does not use vite-plus」，可忽略：仓库用到的是它的任务运行器与 Hook 转发器，没有引入 `vite-plus` 依赖。
+
+## 初始化（重命名项目）
+
+模板默认名是 `template-mcu-minimal-STM32G474VET6-XPulse`，首次使用先换掉：
+
+```bash
+vpr init
+```
+
+```bash
+pnpm run init
+```
+
+```bash
+npm run init
+```
+
+不带参数时交互式询问新名字，也可以直接给：
+
+```bash
+vpr init my-board --yes       # 非交互，跳过确认
+vpr init my-board --dry-run   # 只打印计划，不写文件
+```
+
+脚本会重命名根目录的 `.ioc`、改掉 `.ioc` 里的 `ProjectManager.ProjectFileName` 与
+`ProjectManager.ProjectName`，并把 `README.md`、`.vscode/tasks.json`、`package.json`
+里的旧名一并替换。目录名脚本不管，需要时自己改。npm 传参要加 `--`：
+`npm run init -- my-board --yes`。
 
 ## 编译
 
@@ -122,25 +161,25 @@ vp install
 ```
 
 ```bash
-npm install
+pnpm install
 ```
 
 ```bash
-pnpm install
+npm install
 ```
 
 2. 启用 Hook 转发器
 
 ```bash
-vp hooks enable
-```
-
-```bash
-npm run hooks:install
+vpr hooks:install
 ```
 
 ```bash
 pnpm run hooks:install
+```
+
+```bash
+npm run hooks:install
 ```
 
 之后提交时转发器会自动调用已入库的 `.vite-hooks/commit-msg`。
@@ -184,15 +223,15 @@ $env:VP_GIT_HOOKS=0; git commit -m "Not Linted: 临时跳过校验"   # PowerShe
 1）拆除转发器（unset `core.hooksPath`、删除 `.vite-hooks/_`、记录本地禁用偏好）：
 
 ```bash
-vp hooks disable
-```
-
-```bash
-npm run hooks:uninstall
+vpr hooks:uninstall
 ```
 
 ```bash
 pnpm run hooks:uninstall
+```
+
+```bash
+npm run hooks:uninstall
 ```
 
 2）移除依赖：
@@ -202,11 +241,11 @@ vp remove @commitlint/cli @commitlint/config-conventional
 ```
 
 ```bash
-npm uninstall @commitlint/cli @commitlint/config-conventional
+pnpm remove @commitlint/cli @commitlint/config-conventional
 ```
 
 ```bash
-pnpm remove @commitlint/cli @commitlint/config-conventional
+npm uninstall @commitlint/cli @commitlint/config-conventional
 ```
 
 3）删除 Hook 脚本与配置：
@@ -242,85 +281,24 @@ git rm -r .vite-hooks commitlint.config.mjs
 > `arm-none-eabi-gcc` 要这些内置头文件路径。
 >
 > 仓库自带的 `.vscode/settings.json` 已经预置了 clangd 配置，扩展列表里也推荐了
-> `vscode-clangd`，所以正常情况只要跑一次脚本（或下面两条命令）即可。
+> `vscode-clangd`。
 
-### 一键脚本（推荐）
-
-Windows PowerShell —— 脚本未做代码签名，需要绕过执行策略，否则会报
-`无法加载文件 ... 因为在此系统上禁止运行脚本`：
-
-```powershell
-# 方式一：只对这一次进程生效，不改系统设置
-powershell -ExecutionPolicy Bypass -File .\scripts\init-clangd.ps1
-
-# 方式二：在当前窗口解除限制后再运行
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\scripts\init-clangd.ps1
-```
-
-如果脚本是从别的机器/压缩包拷来的，可能还带 `Zone.Identifier` 标记，先解除锁定：
-
-```powershell
-Unblock-File .\scripts\init-clangd.ps1
-```
-
-Linux / macOS / Git Bash：
+### 初始化
 
 ```bash
-./scripts/init-clangd.sh
+vpr clangd
 ```
-
-### 手动执行 — Windows PowerShell
-
-```powershell
-pio run -t compiledb
-@'
-CompileFlags:
-CompilationDatabase: .
-'@ | Set-Content -Encoding utf8 .clangd
-New-Item -ItemType Directory -Force .vscode | Out-Null
-@'
-{
-"C_Cpp.intelliSenseEngine": "disabled",
-"clangd.arguments": [
-"--compile-commands-dir=${workspaceFolder}",
-"--query-driver=**/arm-none-eabi-gcc.exe,**/arm-none-eabi-g++.exe",
-"--background-index",
-"--clang-tidy"
-],
-"clangd.restartAfterCrash": true
-}
-'@ | Set-Content -Encoding utf8 .vscode/settings.json
-```
-
-### 手动执行 — Linux Bash
 
 ```bash
-pio run -t compiledb
-cat > .clangd <<'EOF'
-CompileFlags:
-CompilationDatabase: .
-EOF
-mkdir -p .vscode
-cat > .vscode/settings.json <<'EOF'
-{
-"C_Cpp.intelliSenseEngine": "disabled",
-"clangd.arguments": [
-"--compile-commands-dir=${workspaceFolder}",
-"--query-driver=**/arm-none-eabi-gcc,**/arm-none-eabi-g++",
-"--background-index",
-"--clang-tidy"
-],
-"clangd.restartAfterCrash": true
-}
-EOF
+pnpm run clangd
 ```
 
-完成后在 VS Code 执行 `clangd: Restart language server`（命令面板 `Ctrl+Shift+P`）。
+```bash
+npm run clangd
+```
 
-> 手动执行时注意：上面的写法会**整体覆盖** `.vscode/settings.json`，把仓库原有的
-> `files.exclude` / `search.exclude` / `files.associations` 冲掉。想保留就只手工追加
-> `clangd.*` 这几项，或者直接用 `scripts/` 里的脚本（它在文件已存在时不会覆盖）。
+脚本会跑 `pio run -t compiledb`、写 `.clangd`，并在 `.vscode/settings.json` 缺失时补一份
+完整配置（已存在则不动）。完成后在命令面板执行 `clangd: Restart language server`。
 
 ### 什么时候需要重新生成
 
@@ -332,4 +310,48 @@ pio run -t compiledb
 ```
 
 `compile_commands.json` 和 `.clangd` 都是生成物，已在 `.gitignore` 中忽略，不必提交。
+
+### 禁用 clangd（交回 PlatformIO IntelliSense）
+
+```bash
+vpr clangd:disable
+```
+
+```bash
+pnpm run clangd:disable
+```
+
+```bash
+npm run clangd:disable
+```
+
+脚本删除 `.vscode/settings.json` 里的 `C_Cpp.*` 与 `clangd.*` 配置（原文件备份为
+`settings.json.bak`）以及 `.clangd`，`compile_commands.json` 保留。之后在扩展面板把
+`clangd` 设为 Disable (Workspace)，PlatformIO 会重建 `c_cpp_properties.json`。
+
+恢复 clangd：`vpr clangd`。
+
+## 脚本本体（不走 Node）
+
+Windows 上脚本未签名，须绕过执行策略：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\init-clangd.ps1
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\disable-clangd.ps1
+```
+
+```bash
+./scripts/init-clangd.sh
+```
+
+```bash
+./scripts/disable-clangd.sh
+```
+
+> 从别处拷来的脚本可能带 `Zone.Identifier` 标记，先 `Unblock-File .\scripts\init-clangd.ps1`。
+> `scripts/*.sh` 需要真正的 bash（Git Bash / WSL）；PATH 上的 `bash` 若是 STM32CubeCLT 自带的精简 sh，会报 `bad substitution`。
+
 
