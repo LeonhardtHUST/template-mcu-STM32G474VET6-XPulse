@@ -59,12 +59,9 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define LED_RED_Pin GPIO_PIN_13
-#define LED_RED_GPIO_Port GPIOC
 /* USER CODE BEGIN Private defines */
-/* 上面两条是 CubeMX 按 .ioc 生成的占位定义（PC13）。
- * XPulse 板上 PC13 只引到扩展排针，没有 LED；板载三色灯见 xpulse.h 的
- * XP_LED_R/LED_G/LED_B（PC2/PC1/PC0，低电平点亮）。 */
+#define GPIO_LOW        GPIO_PIN_RESET
+#define GPIO_HIGH       GPIO_PIN_SET
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

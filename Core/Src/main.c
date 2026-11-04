@@ -33,13 +33,19 @@ int main(void)
   SystemClock_Config();
   MX_GPIO_Init();
 
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
+    XPULSE_LED_R_ON();
     HAL_Delay(500);
-    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
+    XPULSE_LED_R_OFF();
     HAL_Delay(500);
   }
+  /* USER CODE END WHILE */
+
+  /* USER CODE BEGIN 3 */
+  /* USER CODE END 3 */
 }
 
 /**
@@ -86,13 +92,13 @@ static void MX_GPIO_Init(void)
 
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
-  HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(XPULSE_LED_R_GPIO_Port, XPULSE_LED_R_Pin, XPULSE_LED_OFF);
 
-  GPIO_InitStruct.Pin = LED_RED_Pin;
+  GPIO_InitStruct.Pin = XPULSE_LED_R_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED_RED_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(XPULSE_LED_R_GPIO_Port, &GPIO_InitStruct);
 }
 
 /**
