@@ -15,7 +15,8 @@
 ## 1. 提交规范（中文 Conventional Commits）
 
 仓库已接入 [commitlint](https://commitlint.js.org/)（规则集
-`@commitlint/config-conventional`，Git `commit-msg` 钩子由 `vpr hooks:install` 转发到
+`@commitlint/config-conventional`，另由本仓库 `commitlint.config.mjs` 追加「简述含汉字」校验
+（只要求至少一个汉字，不限首字），Git `commit-msg` 钩子由 `vpr hooks:install` 转发到
 `.vite-hooks/commit-msg`）。**两者分工互补**：
 
 | 谁 | 管什么 |
@@ -33,7 +34,7 @@
 
 - `<type>` 只能是：`feat` `fix` `docs` `chore` `refactor` `test` `build` `ci` `perf` `style` `revert`。
 - `<scope>` 可选，用文件名 / 模块名：`ioc` `pio` `board` `vscode` `scripts` `core` `git` `docs` `xpulse` `deps`。
-- **简述用中文**、动词开头、不超过 50 字、结尾不加句号；正文说清「为什么」，不要复述 diff。
+- **简述用中文**（至少含一个汉字；首字不限，`Q4` / `GPIO` / `128K` 开头亦可）、动词开头、不超过 50 字、结尾不加句号；正文说清「为什么」，不要复述 diff。
 - 破坏性变更写成 `feat(core)!: ...`，或在 footer 写 `BREAKING CHANGE: ...`。
 - 提交信息里如实写明本次改动的**验证等级**（见 §3），没验证就写「未验证」。
 - 提交信息里不要加 AI 署名尾注或任何自动生成的署名行。

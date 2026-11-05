@@ -199,7 +199,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\disable-clangd.ps1
 
 ## 提交规范（commitlint）
 
-提交信息必须是 **Conventional Commits** 格式（规则集 `@commitlint/config-conventional`），
+提交信息必须是 **Conventional Commits** 格式（规则集 `@commitlint/config-conventional`，
+另由 `commitlint.config.mjs` 追加「简述至少含一个汉字」校验，首字不限），
 Git `commit-msg` 钩子校验，不合规直接拒绝：
 
 ```text
