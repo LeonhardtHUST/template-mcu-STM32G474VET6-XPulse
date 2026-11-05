@@ -62,7 +62,7 @@
 | D7 | `ProjectManager.AskForMigrate` 被写回 `true` | 本仓 `.ioc` 已设为 `false`（D1 修复时一并改）；CubeMX 每次生成 / 保存都会写回 `true` | 无头生成若卡在 `Begin LoadConfig()` 后不再输出，多半是模态迁移框在等人点；先把它改成 `false` 再跑。见 [CubeMX 工具实测](TOOLING-cubemx.md) §3.4 |
 | D8 | G474 最小工程也会有一条 `VP_RIF_VS_RIF1` 诊断 | 即使只保留 NVIC / RCC / SYS，`project generate` 仍可能打印 `(OptionalMessage_ERROR) Pin5 (VP_RIF_VS_RIF1) cannot be retrieved for this MCU` | 与本工程引脚无关，属 CubeMX G4 数据库噪音；只要没有 `Cannot map` 且 `MX_xxx_Init` 齐全即可，不要为它删外设去「修」 |
 | D9 | 重复生成会把 `syscalls.c` / `sysmem.c` 写成叠加路径 | 日志报 `FileNotFoundException: <工程目录>\D:\...\Core\Src\syscalls.c`，这两个文件不会更新 | 它们是标准 newlib 桩，改动很少；需要更新时从 FW_G4 模板工程里取，或先删除再生成 |
-| D10 | 重新生成后 `Core/Src/main.c` 与 CubeMX 输出漂移 | 本仓这份 `main.c` 是 **120 行**，`USER CODE` 标记只有 **3 个**（`Header`、`WHILE`、`3` 三个块，即 6 行 BEGIN / END 注释），曾被人为精简，已不是当前 CubeMX 的纯输出；用**同一份 `.ioc`**（`TargetToolchain=Makefile` 不变）+ **同一版本 CubeMX 6.18.1** 重新生成，得到 **208 行 / 19 个标记** | 重新生成会**保留** `USER CODE` 块里的用户代码（实测 `XPULSE_LED_R_ON(); HAL_Delay(500); ...` 那段仍在），但会整篇重写注释与空标记块，产生约 90 行与本意无关的 diff。这类 diff 必须**单独成一次提交**，不要和功能改动混在一起（[工程规约](../AGENTS.md) §1.3 原子性）；**不要**为了让 diff 变小去手工删注释 |
+| D10 | 重新生成后 `Core/Src/main.c` 与 CubeMX 输出漂移 | 本仓这份 `main.c` 是 **120 行**，`USER CODE` 标记只有 **3 个**（`Header`、`WHILE`、`3` 三个块，即 6 行 BEGIN / END 注释），曾被人为精简，已不是当前 CubeMX 的纯输出；用**同一份 `.ioc`**（`TargetToolchain=Makefile` 不变）+ **同一版本 CubeMX 6.18.1** 重新生成，得到 **208 行 / 19 个标记**（2026-11-05 用 CubeMX 6.18.1 + 本仓 `.ioc` + `Makefile` 工具链，无头 `config load` + `project generate` 在临时目录复现：`grep -c "USER CODE BEGIN"` 得 19，仓库版得 3） | 重新生成会**保留** `USER CODE` 块里的用户代码（实测 `XPULSE_LED_R_ON(); HAL_Delay(500); ...` 那段仍在），但会整篇重写注释与空标记块，产生约 90 行与本意无关的 diff。这类 diff 必须**单独成一次提交**，不要和功能改动混在一起（[工程规约](../AGENTS.md) §1.3 原子性）；**不要**为了让 diff 变小去手工删注释 |
 
 ---
 
