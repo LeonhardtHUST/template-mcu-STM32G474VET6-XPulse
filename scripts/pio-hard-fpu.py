@@ -9,9 +9,15 @@
 #   并去链软浮点版 libgcc / newlib。这里显式补齐 ASFLAGS 与 LINKFLAGS，
 #   让编译、汇编、链接三个 scope 使用同一套 ABI。
 #
-# 为什么必须是 pre: 前缀（`extra_scripts = pre:scripts/pio-hard-fpu.py`）：
-#   脚本要在 ststm32 平台的 framework 脚本之前执行；HAL / CMSIS 静态库在
-#   framework 脚本里克隆 env，晚于此时追加就赶不上，HAL 会退回软浮点。
+# 什么必需、什么不必需：
+#   必需的是「把同一对 flag 补进 ASFLAGS / LINKFLAGS」这件事本身：整行删掉
+#   `extra_scripts` 后链接退出码 1，92 个 .o 全部报
+#   "uses VFP register arguments, firmware.elf does not"（已实测）。
+#   不必需的是 `pre:` 前缀：编译侧的硬浮点来自 build_flags→CCFLAGS，与本脚本的
+#   执行顺序无关，而 ASFLAGS / LINKFLAGS 在汇编 / 链接时才被读取。实测把
+#   `pre:` 去掉（`extra_scripts = scripts/pio-hard-fpu.py`）产物完全一致
+#   （SUCCESS、RAM 1584 B / FLASH 3740 B、HAL 仍 Tag_FP_arch: VFPv4-D16）；
+#   保留 pre: 只是稳妥的书写习惯，不是链接成功的前提。
 #
 # 参照：PlatformIO 官方论坛 "object uses VFP register arguments" 系列答复
 #   （maxgerhardt），做法即 pre: extra_script + env.Append(CCFLAGS/LINKFLAGS)。
