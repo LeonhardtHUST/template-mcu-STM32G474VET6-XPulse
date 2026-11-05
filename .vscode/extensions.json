@@ -1,19 +1,14 @@
 {
-  // See http://go.microsoft.com/fwlink/?LinkId=827846
-  // for the documentation about the extensions.json format
-  "recommendations": [
-    "llvm-vs-code-extensions.vscode-clangd",
-    "marus25.cortex-debug",
-    "platformio.platformio-ide",
-    // platformio-ide 的硬依赖（extensionDependencies），不能卸载；
-    // 语言智能交给 clangd，cpptools 仅作 PIO 依赖与备用 cppdbg 调试器。
-    "ms-vscode.cpptools"
-  ],
-  "unwantedRecommendations": [
-    // 这个"包"会连带 cpptools-themes / cpp-devtools / cmake-tools，
-    // CMake Tools 与 PIO 的编译数据库、配置来源重复冲突；用 cpptools 单体即可。
-    "ms-vscode.cpptools-extension-pack",
-    // 社区 fork，与官方 platformio-ide 争抢同一套 PIO 状态栏 / 任务 / 调试入口。
-    "pioarduino.pioarduino-ide"
-  ]
+    // See http://go.microsoft.com/fwlink/?LinkId=827846
+    // for the documentation about the extensions.json format
+    "recommendations": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "marus25.cortex-debug",
+        "ms-vscode.cpptools",
+        "platformio.platformio-ide"
+    ],
+    "unwantedRecommendations": [
+        "ms-vscode.cpptools-extension-pack",
+        "pioarduino.pioarduino-ide"
+    ]
 }
