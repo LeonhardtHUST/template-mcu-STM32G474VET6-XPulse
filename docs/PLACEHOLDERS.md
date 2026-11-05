@@ -30,7 +30,7 @@
 | B4 | `.vscode/tasks.json` 的 `windows.command` / `linux.command` | `STM32CubeMX.exe` / `STM32CubeMX`（依赖 PATH） | 本机 CubeMX 不在 PATH、或安装到非默认目录时改成绝对路径 | 本机实测装在 `C:/ST/STM32CubeMX/STM32CubeMX.exe`（**不是**官方安装器默认的 `C:/Program Files/STMicroelectronics/...`）；这是本机值，换机器要重新确认。定位方法见 [CubeMX 工具实测](TOOLING-cubemx.md)。 |
 | B5 | `platformio.ini` 的版本锁定 | `ststm32@20.0.0`、`framework-stm32cubeg4@1.6.3`、`toolchain-gccarmnoneeabi@1.70201.0`、`tool-ldscripts-ststm32@0.3.0`、`tool-openocd@3.1200.7` | 升级时要一起升级 | 与 CubeMX 的 FW_G4 组成验证组合，升级须**同时**验证「生成代码 + `pio run`」，不要单独升 HAL。 |
 | B6 | `.ioc` 与 CubeMX 版本 | `.ioc` 写回 `MxCube.Version=6.18.1`、`MxDb.Version=DB.6.0.181` | 以 exe 属性 / 运行日志为准 | 版本戳可能是历史继承值；迁移后审阅工具写回并验证生成 + 构建。 |
-| B7 | 仓库自身 | 默认仓库名 `template-mcu-minimal-STM32G474VET6-XPulse` | 你的仓库名 | `git remote -v` 仍指向模板仓库时，提交会推到模板去；新建仓库后确认 remote。 |
+| B7 | 仓库自身 | 默认仓库名 `template-mcu-STM32G474VET6-XPulse` | 你的仓库名 | `git remote -v` 仍指向模板仓库时，提交会推到模板去；新建仓库后确认 remote。 |
 | B8 | `README.md` 第 1 行 | 模板默认名 | 你的项目名 | `vpr init` 会自动替换；若手工改过工程名，记得同步这一行。 |
 
 ---

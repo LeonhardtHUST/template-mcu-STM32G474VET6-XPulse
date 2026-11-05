@@ -1,4 +1,4 @@
-# template-mcu-minimal-STM32G474VET6-XPulse
+# template-mcu-STM32G474VET6-XPulse
 
 面向 STM32CubeMX + PlatformIO + VS Code 的最小 STM32G474VET6 起步模板。
 
@@ -28,7 +28,7 @@
 
 ## 初始化（重命名项目）
 
-模板默认名是 `template-mcu-minimal-STM32G474VET6-XPulse`，首次使用先换掉：
+模板默认名是 `template-mcu-STM32G474VET6-XPulse`，首次使用先换掉：
 
 ```bash
 vpr init
@@ -122,7 +122,7 @@ pio run -t upload
 
 ## 修改外设
 
-在 STM32CubeMX 中打开 `template-mcu-minimal-STM32G474VET6-XPulse.ioc` → 调整时钟、引脚或外设 → 点 `Generate Code` 生成代码 → 执行 `pio run` 重新编译。
+在 STM32CubeMX 中打开 `template-mcu-STM32G474VET6-XPulse.ioc` → 调整时钟、引脚或外设 → 点 `Generate Code` 生成代码 → 执行 `pio run` 重新编译。
 
 > CubeMX 生成代码时会顺带产出 `Drivers/` 和 `.mxproject`，这两个已在 `.gitignore` 中忽略，不会污染版本库；HAL 头文件实际取自 PlatformIO 的 `framework-stm32cubeg4` 包。
 

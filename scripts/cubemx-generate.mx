@@ -1,4 +1,4 @@
-config load template-mcu-minimal-STM32G474VET6-XPulse.ioc
+config load template-mcu-STM32G474VET6-XPulse.ioc
 SetStructure Advanced
 project generate
 exit

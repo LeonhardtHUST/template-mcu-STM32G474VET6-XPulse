@@ -6,11 +6,11 @@
       "type": "shell",
       "windows": {
         "command": "STM32CubeMX.exe",
-        "args": ["${workspaceFolder}\\template-mcu-minimal-STM32G474VET6-XPulse.ioc"]
+        "args": ["${workspaceFolder}\\template-mcu-STM32G474VET6-XPulse.ioc"]
       },
       "linux": {
         "command": "STM32CubeMX",
-        "args": ["${workspaceFolder}/template-mcu-minimal-STM32G474VET6-XPulse.ioc"]
+        "args": ["${workspaceFolder}/template-mcu-STM32G474VET6-XPulse.ioc"]
       },
       "problemMatcher": []
     },
