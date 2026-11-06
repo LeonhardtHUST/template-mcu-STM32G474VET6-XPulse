@@ -3,6 +3,9 @@
 > **范式说明**：本文只描述「怎么写」的通用模板，仓库里**没有**任何具体外设库实现，
 > 也不提供任何第三方驱动。文中的 `<name>`、`src/`、`inc/` 都是占位名，
 > 请按你自己的模块替换。所有示例均为范式，不代表本模板已内置这些代码。
+>
+> **适用范围**：本文只讲 `lib/<name>/`（可复用 / 第三方组件）。自写业务代码放 `app/`，
+> 见 [目录结构](LAYOUT.md)；两者编译模型不同，不要混用。
 
 ## 1. 为什么需要它
 
@@ -58,6 +61,42 @@
 > `system_stm32g4xx.c` 或 Keil 的 `MDK-ARM/**` 放进 `lib/`：
 > 前两类由 PlatformIO 的 `framework-stm32cubeg4` 提供，
 > 后几类会造成重复定义或无关告警。
+
+### 2.1 `lib/` 不继承 `-Werror`
+
+`platformio.ini` 的 `build_src_flags` 只作用于 `src_dir` 下的源码，`lib/` 里的
+`.c` **不会**拿到 `-std=c11` / `-Wall` / `-Wextra` / `-Werror`。把代码从
+`Core/Src` 挪到 `lib/`，等于悄悄撤掉严格告警门禁。
+
+补救：在 `library.json` 的 `build` 里显式声明 `flags`：
+
+```json
+"build": {
+  "flags": ["-std=c11", "-Wall", "-Wextra", "-Werror"],
+  "srcDir": "src",
+  "includeDir": "inc"
+}
+```
+
+干净对照实测（同一份只有 `return-type` 告警、无语法错误的库源码）：带 `flags` →
+`error: control reaches end of non-void function [-Werror=return-type]`、构建 FAILED；
+不带 → `warning: ... [-Wreturn-type]`、构建 SUCCESS。自写业务代码放 `app/` 则
+自动继承 `build_src_flags`，无需这段配置。
+
+### 2.2 未被 `#include` 的库根本不参与编译
+
+默认 LDF 模式（本平台实测 `chain`）只收被源码 `#include` 链拉进来的库。往
+`lib/orphan/` 放一份语法完全错误的 `.c`，`pio run` 照样 SUCCESS。这是双刃剑：
+不用的库零成本，但写坏的库会静默躺着，直到某天被引用才炸。
+
+- **要全量编译检查**：在 `platformio.ini` 里写 `lib_deps = <name>`（名字取
+  `library.json` 的 `name`）。实测该库恒被编译，编译对象数 92 → 93，并生成
+  `lib<name>.a`。代价是失去「不用的库零成本」。
+- **注意**：`lib_deps` 只管「编不编」，§2.1 的 `flags` 管「门禁严不严」，两者正交，
+  要「全量且严格」就得同时配。
+- **无效做法**：`lib_ldf_mode = off` 不会把本地 `lib/` 全量编进来。官方定义是
+  「只构建 manifest 或 `lib_deps` 指定的库」——指**被指定为依赖**，不是任何带
+  `library.json` 的目录；实测加它对 `firmware.elf` / `.bin` 的哈希零影响。
 
 ## 3. 「CubeMX 生成物 → PlatformIO 自维护库」流程
 
