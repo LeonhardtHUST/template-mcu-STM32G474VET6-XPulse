@@ -145,6 +145,8 @@ PC2.Signal=GPIO_Output
 [INFO] ImportTextPane:234 - (OptionalMessage_ERROR) Pin5 (VP_RIF_VS_RIF1) cannot be retrieved for this MCU
 ```
 
+- 日志里的 `Pin<N>` 编号会浮动：本仓 2026-11-05 记 `Pin5`、2026-11-06 记 `Pin4`，
+  **编号不是判据**（[占位符](PLACEHOLDERS.md) D8）。
 - 它**不是** `Cannot map signal`，与本工程的引脚配置无关；
 - 加 / 减普通 GPIO 不会让它消失；
 - 判定「配置是否生效」仍以**生成物**为准：日志无 `Cannot map` + `main.c` 里有对应

@@ -60,10 +60,34 @@
 | D5 | CubeMX 对 `.ioc` 的错误是**非致命**的 | 信号名写错只在日志里留一行 `(OptionalMessage_ERROR) Cannot map signal ...`，`project generate` 依然返回成功，外设被静默丢弃 | 改过 `.ioc` 后**必须**核验：① 日志无 `Cannot map`；② 生成的 `main.c` 里有对应的 `MX_xxx_Init`。见 [工程规约](../AGENTS.md) §2.3 |
 | D6 | `Drivers/` 被 git 忽略 | `.gitignore` 一行 `Drivers/` 排除整个目录；HAL / CMSIS 由 PlatformIO framework 提供 | 新克隆的仓库没有 `Drivers/` 是**预期**的。注意 git 不能 re-include 被排除目录下的文件，若确需加占位目录要同时放行目录本身；本模板不需要 |
 | D7 | `ProjectManager.AskForMigrate` 被写回 `true` | 本仓 `.ioc` 已设为 `false`（D1 修复时一并改）；CubeMX 每次生成 / 保存都会写回 `true` | 无头生成若卡在 `Begin LoadConfig()` 后不再输出，多半是模态迁移框在等人点；先把它改成 `false` 再跑。见 [CubeMX 工具实测](TOOLING-cubemx.md) §3.4 |
-| D8 | G474 最小工程也会有一条 `VP_RIF_VS_RIF1` 诊断 | 即使只保留 NVIC / RCC / SYS，`project generate` 仍可能打印 `(OptionalMessage_ERROR) Pin5 (VP_RIF_VS_RIF1) cannot be retrieved for this MCU` | 与本工程引脚无关，属 CubeMX G4 数据库噪音；只要没有 `Cannot map` 且 `MX_xxx_Init` 齐全即可，不要为它删外设去「修」 |
-| D9 | 重复生成会把 `syscalls.c` / `sysmem.c` 写成叠加路径 | 日志报 `FileNotFoundException: <工程目录>\D:\...\Core\Src\syscalls.c`，这两个文件不会更新 | 它们是标准 newlib 桩，改动很少；需要更新时从 FW_G4 模板工程里取，或先删除再生成 |
+| D8 | G474 最小工程也会有一条 `VP_RIF_VS_RIF1` 诊断 | 即使只保留 NVIC / RCC / SYS，`project generate` 仍可能打印 `(OptionalMessage_ERROR) Pin<N> (VP_RIF_VS_RIF1) cannot be retrieved for this MCU`；`N` 随配置浮动，本仓 2026-11-05 记 `Pin5`、2026-11-06 记 `Pin4` | 与本工程引脚无关，属 CubeMX G4 数据库噪音，**引脚号不是判据**；只要没有 `Cannot map` 且 `MX_xxx_Init` 齐全即可，不要为它删外设去「修」 |
+| D9 | 重复生成**可能**把 `syscalls.c` / `sysmem.c` 写成叠加路径 | 日志报 `FileNotFoundException: <工程目录>\D:\...\Core\Src\syscalls.c`，这两个文件不会更新；2026-11-06 的一次无头重生成**未复现**该报错（日志 0 条），故不是每次必然出现 | 它们是标准 newlib 桩，改动很少；判定仍以日志为准，需要更新时从 FW_G4 模板工程里取，或先删除再生成 |
 | D10 | 重新生成后 `Core/Src/main.c` 与 CubeMX 输出漂移 | 本仓这份 `main.c` 曾是 **120 行 / 3 个 `USER CODE` 标记**（`Header`、`WHILE`、`3` 三个块，即 6 行 BEGIN / END 注释），是被人为精简、非 CubeMX 纯输出；2026-11-05 已用**同一份 `.ioc`** + **CubeMX 6.18.1** 重新生成消除（提交 `7ef50fa`，`Core/` 下 6 个生成文件一并回归生成态），现状 **19 个 `USER CODE BEGIN` 标记**；2026-11-06 起 `Includes` / `2` / `WHILE` 三个块内各有一处 `app/` 转调胶水，故不再是空白的生成器输出，重生成后须用 `grep -n "app_" Core/Src/main.c` 确认三处仍在 | `main.c` 的块外内容由 CubeMX 全权生成，**不要再手工精简块外**；块内只放胶水，业务逻辑一律进 `app/`（见 [目录结构](LAYOUT.md)）；**行数不是稳定判据**（随 CubeMX 小版本与 IP 数量浮动，本仓实测 208 与 212 都出现过），验漂移用 `git diff` 是否为空、或 `grep -c "USER CODE BEGIN"`（本 `.ioc` 恒为 **19**）；这类重生成 diff 必须**单独成一次提交**（[工程规约](../AGENTS.md) §1.3）；**不要**为了让 diff 变小去手工删注释 |
 | D11 | 重生成 `Core/` 的三个已实测副作用 | ① `.ioc` 被回写约 **46 行**元数据（`AskForMigrate`、空 `ProjectManager.*` 键、`RCC.*Freq_Value` 推导值），**无引脚 / IP / 时钟实质变化**；② CubeMX 写 **CRLF**，`.gitattributes` 归一为 LF 后 `git status` 先报 6 个 `M`、`git diff` 却为空；③ `MX_GPIO_Init` 把 PC2 初值生成为 `GPIO_PIN_RESET`（**灯亮**），与 `xpulse.h` 的 `XPULSE_LED_OFF = GPIO_PIN_SET`（**灯灭**）相反 | ① `git checkout -- template-mcu-STM32G474VET6-XPulse.ioc` 还原，不要提交这批元数据；② 是行尾归一化的正常表现，`git add` 一次即归零，不要当成生成器改了东西；③ `.ioc` 里**没有**有效的输出电平键（实测补 `PC2.GPIO_Output_Level` 不生效），派生工程若要求上电灭，在 `main.c` 的 `USER CODE BEGIN MX_GPIO_Init_2` 里写 `HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, XPULSE_LED_OFF);` —— **不要**放进 `MX_GPIO_Init_1`，那时 GPIOC 时钟还没使能。本模板**未加**这一行（如需请在 `app/` 里实现，见 [工程规约](../AGENTS.md) §2.8）；上电到首条 `XPULSE_LED_R_ON()` 之间只差几条指令，实板看不出 |
+
+### D10 补充：L4 重生成实测（2026-11-06）
+
+**这一节不取消 D10 的核对要求**，只是把一次可复现的实测结果留在版本库里，避免派生工程
+重新试错。工作目录为项目根，命令：
+
+```bash
+"C:/ST/STM32CubeMX/jre/bin/java.exe" -jar "C:/ST/STM32CubeMX/STM32CubeMX.exe" \
+  -q scripts/cubemx-generate.mx
+```
+
+| 核验项 | 结果 |
+| --- | --- |
+| 生成退出码 / 日志 | rc=0；`Cannot map` **0 条**；唯一 `OptionalMessage_ERROR` 是 D8 的 RIF 诊断（本次 `Pin4`）；`FileNotFoundException` 0 条。另有 `Updater is busy`、`RefConfig RCC_CommonPeriphClockConfig` 两条工具告警，不影响生成物 |
+| `Core/Src/main.c` | 209 行 / **19 个 `USER CODE BEGIN`**；三处 `app/` 胶水（`#include "app_example.h"`、`app_init()`、`app_loop()`）**全部保留**；`MX_GPIO_Init()` 声明 / 调用 / 定义齐全 |
+| 生成物字节 | 6 个 `Core/` 生成文件与生成前 `cmp` **逐字节一致**；`.vscode/extensions.json` 亦未变 |
+| `.ioc` | 回写 46 行元数据，按 D11 ① `git checkout -- <.ioc>` 还原后 `git diff` 为空 |
+| 补 L3 | `pio run -t clean && pio run` → SUCCESS，`--print-memory-usage` RAM 1584 B / FLASH 3776 B，PIO size 44 B，93 个编译对象含 `app_example.o`；`compile_commands.json` 仍 93 条 |
+
+结论：`ProjectManager.KeepUserCode=true` 时，写在 USER CODE 块内的胶水受重生成保护。
+**换 CubeMX 版本、改 `.ioc`、或动了块外内容后仍须重新核验**，不能引用本次结果免检。
+本次**未重新烧录**：生成物与已实板验证的提交态逐字节一致，运行时逻辑未变，
+原 L5 结论继续适用；若后续改动了 `app/` 里的运行时逻辑，按 [工程规约](../AGENTS.md)
+§3 仍须重做 L5。
 
 ---
 
