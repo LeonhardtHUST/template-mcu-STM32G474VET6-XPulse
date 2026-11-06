@@ -74,9 +74,23 @@ pio run -t upload
 
 ### 5. 验证
 
-上电后板载**红灯（PC2）应闪烁**：`Core/Src/main.c` 的 `USER CODE BEGIN WHILE` 块里
-用 `xpulse.h` 的 `XPULSE_LED_R_ON()` / `XPULSE_LED_R_OFF()` 交替点灯。这是模板唯一
-自带的功能代码，看到红灯闪就可以动手改成自己的逻辑了。
+上电后板载**红灯（PC2）应闪烁**：点灯逻辑在 `app/src/app_example.c` 的
+`app_loop()` 里，`Core/Src/main.c` 的三个 USER CODE 块只做 `#include` /
+`app_init()` / `app_loop()` 转调。看到红灯闪就可以在 `app/` 下改成自己的
+逻辑了，不必再动生成文件。
+
+### 6. 关于两个 example 文件
+
+模板里有两份起步示例，都参与编译，但用途不同：
+
+| 文件 | 来源 | 现状 |
+| --- | --- | --- |
+| `Core/Src/example.c`、`Core/Inc/example.h` | 由使用者放入并已提交（`81cc64b`） | 定义 `example_to_hust(int)`，**无调用点**，链接时被 `--gc-sections` 丢弃；属历史遗留，不适合作为新代码的落点 |
+| `app/src/app_example.c`、`app/inc/app_example.h` | 模板自带 | 定义 `app_init()` / `app_loop()` 并由 `main.c` 调用，点灯逻辑就在这里，是新代码的落点 |
+
+两份的示例函数名必须不同（`example_to_hust` / `app_example_to_hust`），否则同名
+符号同时参与编译会 `multiple definition`。新写业务代码一律放 `app/`，目录职责见
+[目录结构](docs/LAYOUT.md)；`lib/` 的两个已知坑见 [库封装范式](docs/LIB-PATTERN.md) §2.1 / §2.2。
 
 ## 修改外设（日常循环）
 
