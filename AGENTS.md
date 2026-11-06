@@ -9,6 +9,7 @@
 - CubeMX 命令行与 G4 实测坑：[CubeMX 工具实测](docs/TOOLING-cubemx.md)。
 - 板级「信号 → 引脚」定义在 `Core/Inc/xpulse.h`，库封装范式见
   [库封装范式](docs/LIB-PATTERN.md)。
+- 代码该写在哪、为什么 `src_dir = .`：[目录结构](docs/LAYOUT.md)。
 
 ---
 
@@ -33,7 +34,7 @@
 ```
 
 - `<type>` 只能是：`feat` `fix` `docs` `chore` `refactor` `test` `build` `ci` `perf` `style` `revert`。
-- `<scope>` 可选，用文件名 / 模块名：`ioc` `pio` `board` `vscode` `scripts` `core` `git` `docs` `xpulse` `deps`。
+- `<scope>` 可选，用文件名 / 模块名：`ioc` `pio` `app` `board` `vscode` `scripts` `core` `git` `docs` `xpulse` `deps`。
 - **简述用中文**（至少含一个汉字；首字不限，`Q4` / `GPIO` / `128K` 开头亦可）、动词开头、不超过 50 字、结尾不加句号；正文说清「为什么」，不要复述 diff。
 - 破坏性变更写成 `feat(core)!: ...`，或在 footer 写 `BREAKING CHANGE: ...`。
 - 提交信息里如实写明本次改动的**验证等级**（见 §3），没验证就写「未验证」。
@@ -84,8 +85,11 @@ feat: 加了很多功能还顺手格式化全仓库     # 不原子
    HAL / CMSIS / 启动文件 / 链接脚本由 PlatformIO 的 `framework-stm32cubeg4` 包提供，
    已在 `.gitignore` 中排除。新克隆的仓库没有 `Drivers/` 是正常的。
 5. **`Core/Src/system_stm32g4xx.c` 已从构建中排除**（`platformio.ini` 的
-   `build_src_filter = +<*> -<system_stm32g4xx.c>`），不要把它加回去，
-   否则与 framework 的 CMSIS 重复定义符号。
+   `build_src_filter` 里的 `-<Core/Src/system_stm32g4xx.c>`），不要把它加回去，
+   否则与 framework 的 CMSIS 重复定义符号。`src_dir = .` 时排除项必须写全相对
+   路径（写成 `-<system_stm32g4xx.c>` 不生效），且 `build_src_filter` 必须用
+   `+<...>` 白名单，不可用 `+<*>`（会把 `docs/`、`node_modules/` 等目录下的
+   `.c` 全部拉进编译）。
 6. **不要改 `Core/Inc/stm32g4xx_hal_conf.h` 里的用户逻辑**。该文件由 CubeMX 覆盖生成；
    缺哪个 `HAL_XXX_MODULE_ENABLED` 就在 `.ioc` 里加对应外设再重新生成。
 7. **版本锁定不要单独动**。`ststm32@20.0.0` / `framework-stm32cubeg4@1.6.3` /
@@ -93,12 +97,13 @@ feat: 加了很多功能还顺手格式化全仓库     # 不原子
    `tool-openocd@3.1200.7` 与 CubeMX 组成验证组合，升级须重新验证「生成 + 构建」。
    CubeMX 实际版本以 exe 属性 / 运行日志为准，`.ioc` 的版本戳可能是历史值。
 8. **业务逻辑与 HAL 解耦**。可在主机上跑的核心算法不要直接依赖 HAL 头文件，
-   方便用主机 GCC 做 L2 回归；模板骨架 `Core/` 只保留 CubeMX 生成的 10 个文件、
-   零功能代码，功能代码放 `lib/<name>/` 或 USER CODE 块。
+   方便用主机 GCC 做 L2 回归；`Core/` 只放 CubeMX 生成物，其 USER CODE 块只留
+   `app_init()` / `app_loop()` 之类的转调胶水、不含业务逻辑；业务代码放 `app/`，
+   `lib/<name>/` 留给可复用 / 第三方组件。目录职责见 [目录结构](docs/LAYOUT.md)。
 9. **行尾统一 LF**（`.gitattributes` 的 `* text=auto eol=lf`，`.editorconfig` 一致，
    `c/h/ioc/ini/json/md` 用 2 空格缩进）。CubeMX 仍可能把生成文件写成 CRLF；
    `text` 属性在 `add` / `status` / `diff` 时归一化，不要为 CubeMX 目录恢复 `eol=crlf`。
-10. **自有目录用小写**（`boards/`、`docs/`、`scripts/`、`examples/`）；
+10. **自有目录用小写**（`app/`、`boards/`、`docs/`、`scripts/`、`examples/`）；
     CubeMX 管理的 `Core/`、`Drivers/`、`Middlewares/` 保持工具命名与位置。
 11. **编辑 `Core/**` 前关闭 `editor.formatOnSave`**，或用 `// clang-format off` 保护，
     只保留与本次任务相关的 diff；避免保存时整篇重排 `main.c` 造成巨大无关 diff。
